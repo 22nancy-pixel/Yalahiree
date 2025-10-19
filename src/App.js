@@ -11,6 +11,8 @@ import ResumeBuilder from './pages/ResumeBuilder'
 import EmployerDashboard from './pages/EmployerDashboard'
 import LanguageSelector from './components/LanguageSelector'
 import AuthForm from './components/AuthForm'
+import Original from './pages/Original'
+import ResumeBuilderBlueCollar from './pages/BlueCollarProfile'
 
 function App() {
   const { t } = useTranslation()
@@ -22,8 +24,9 @@ function App() {
         <NavBar t={t} session={session} />
         <div style={{ padding: '2rem' }}>
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/resume" element={<ResumeBuilder />} />
+            <Route path="/" element={<Original />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/resume" element={<ResumeBuilderBlueCollar />} />
 
             {/* Protected route */}
             <Route
@@ -78,8 +81,9 @@ function NavBar({ t, session }) {
     >
       <div>
         <Link to="/" style={{ marginRight: '1rem' }}>{t('home')}</Link>
-        <Link to="/resume" style={{ marginRight: '1rem' }}>{t('resume')}</Link>
-        <Link to="/dashboard" style={{ marginRight: '1rem' }}>{t('dashboard')}</Link>
+        <Link to="/home" style={{ marginRight: '1rem' }}>{t('second page')}</Link>
+        <Link to="/resume" style={{ marginRight: '1rem' }}>{t('profile')}</Link>
+        <Link to="/dashboard" style={{ marginRight: '1rem' }}>{t('login')}</Link>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
