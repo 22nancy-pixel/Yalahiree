@@ -1,31 +1,43 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { fr, ar } from 'date-fns/locale';
+import { useEffect, useState } from 'react';
+
+registerLocale('fr', fr);
+registerLocale('ar', ar);
+
 function WorkExperienceForm({ formData, setFormData, onNext, onBack }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
   const handleChange = (index, field, value) => {
     const updatedExperience = [...formData.experience];
     updatedExperience[index][field] = value;
     setFormData({ ...formData, experience: updatedExperience });
   };
+
   const handleAddExperience = () => {
     setFormData({
       ...formData,
       experience: [
         ...formData.experience,
-        {
-          jobTitle: '',
-          company: '',
-          startDate: '',
-          endDate: '',
-          description: ''
-        }
+        { jobTitle: '', company: '', startDate: null, endDate: null, description: '' }
       ]
     });
   };
+
   const handleRemoveExperience = (index) => {
     const updatedExperience = formData.experience.filter((_, i) => i !== index);
     setFormData({ ...formData, experience: updatedExperience });
   };
+
+  const getLocale = () => {
+    if (i18n.language === 'fr') return 'fr';
+    if (i18n.language === 'ar') return 'ar';
+    return 'en';
+  };
+
   return (
     <div>
       <h3>{t('work_experience')}</h3>
@@ -46,17 +58,23 @@ function WorkExperienceForm({ formData, setFormData, onNext, onBack }) {
           />
           <br />
           <label>{t('start_date')}</label>
-          <input
-            type="date"
-            value={exp.startDate}
-            onChange={(e) => handleChange(index, 'startDate', e.target.value)}
+          <DatePicker
+            selected={exp.startDate ? new Date(exp.startDate) : null}
+            onChange={(date) => handleChange(index, 'startDate', date)}
+            placeholderText={t('start_date')}
+            dateFormat="MM/yyyy"
+            showMonthYearPicker
+            locale={getLocale()}
           />
           <br />
           <label>{t('end_date')}</label>
-          <input
-            type="date"
-            value={exp.endDate}
-            onChange={(e) => handleChange(index, 'endDate', e.target.value)}
+          <DatePicker
+            selected={exp.endDate ? new Date(exp.endDate) : null}
+            onChange={(date) => handleChange(index, 'endDate', date)}
+            placeholderText={t('end_date')}
+            dateFormat="MM/yyyy"
+            showMonthYearPicker
+            locale={getLocale()}
           />
           <br />
           <label>{t('description')}</label>
@@ -94,4 +112,5 @@ function WorkExperienceForm({ formData, setFormData, onNext, onBack }) {
     </div>
   );
 }
+
 export default WorkExperienceForm;

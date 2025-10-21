@@ -138,7 +138,7 @@ function ResumeBuilderBlueCollar() {
             t('Mechanic'),
             t('Painting'),
             t('Cleaning'),
-            t('Other')
+            t('other')
           ]}
           labels={{ skills: t('skills'), other: t('other') }}
         />

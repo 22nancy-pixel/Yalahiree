@@ -14,6 +14,11 @@ export default function EducationForm({ formData, setFormData, onNext, onBack, o
     setFormData({ ...formData, education: [...formData.education, { degree: '', institution: '', year: '' }] });
   };
 
+   const removeEducation = (index) => {
+    const newEdu = formData.education.filter((_, i) => i !== index);
+    setFormData({ ...formData, education: newEdu });
+  };
+  
   return (
     <div>
       <h3>{labels?.title || t('education')}</h3>
@@ -42,8 +47,18 @@ export default function EducationForm({ formData, setFormData, onNext, onBack, o
             onChange={(e) => handleChange(index, 'year', e.target.value)}
             style={{ width: '100%', padding: '0.5rem' }}
           />
+               {formData.education.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeEducation(index)}
+              style={{ marginTop: '0.5rem', backgroundColor: '#F44336', color: 'white', border: 'none', padding: '0.3rem 0.6rem', borderRadius: '4px' }}
+            >
+              {t('remove_education')}
+            </button>
+          )}
         </div>
       ))}
+      
 
       <button type="button" onClick={addEducation} style={{ background: '#007BFF', color: 'white', border: 'none', borderRadius: '6px', padding: '0.5rem 1rem', cursor: 'pointer' }}>
         ➕ {t('add_education')}

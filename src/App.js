@@ -81,7 +81,7 @@ function NavBar({ t, session }) {
     >
       <div>
         <Link to="/" style={{ marginRight: '1rem' }}>{t('home')}</Link>
-        <Link to="/home" style={{ marginRight: '1rem' }}>{t('second page')}</Link>
+        <Link to="/home" style={{ marginRight: '1rem' }}>{t('role')}</Link>
         <Link to="/resume" style={{ marginRight: '1rem' }}>{t('profile')}</Link>
         <Link to="/dashboard" style={{ marginRight: '1rem' }}>{t('login')}</Link>
       </div>

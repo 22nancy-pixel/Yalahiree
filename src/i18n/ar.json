@@ -57,7 +57,7 @@
   "edit": "تعديل",
   "submit_resume": "إرسال السيرة الذاتية",
   "resume_submitted": "تم إرسال سيرتك الذاتية بنجاح!",
-"helping_find_jobs": "نساعد العمال والموظفين على إيجاد الوظائف المناسبة بسهولة",
+  "helping_find_jobs": "نساعد العمال والموظفين على إيجاد الوظائف المناسبة بسهولة",
   "no_work_experience": "لم يتم تقديم أي خبرة عمل.",
   "add_experience": "إضافة خبرة أخرى",
   "original_msg":"مساعدة الشركات وطالبي العمل على التواصل بسهول",
@@ -95,5 +95,22 @@
   "Carpentry": "نجارة",
   "Construction": "إنشاءات",
   "Mechanic": "ميكانيكي",
-  "Painting": "دهان"
+  "Painting": "دهان",
+  "Cleaning": "تنظيف",
+  "degree": "الشهادة / المؤهل",
+  "institution": "المؤسسة / المدرسة",
+  "year": "سنة التخرج",
+  "education_optional": "أضف تفاصيل التعليم إذا كانت متوفرة.",
+  "mandatory_field": "هذا الحقل إلزامي.",
+  "other_skill_placeholder": "أدخل مهارة أخرى",
+  "upload_optional": "تحميل سيرتك الذاتية اختياري.",
+  "add_previous_jobs": "أضف وظائفك وتفاصيلها السابقة.",
+  "please_add_experience": "يرجى إضافة خبرة عمل واحدة على الأقل.",
+  "remove_experience": "إزالة الخبرة",
+  "add_education": "إضافة التعليم",
+  "remove_education": "حذف التعليم",
+  "personal_info": "المعلومات الشخصية",
+  "enter_other_skill": "أدخل مهارة أخرى",
+    "role": "wgwreg"
+
 }
