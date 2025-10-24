@@ -111,6 +111,18 @@
   "remove_education": "حذف التعليم",
   "personal_info": "المعلومات الشخصية",
   "enter_other_skill": "أدخل مهارة أخرى",
-  "role": "اختر دورك"
+  "role": "اختر دورك",
+  "whitecollar_profile_description": "أكمل ملفك المهني حتى تتمكن الشركات من العثور عليك بسهولة.",
+  "Communication": "التواصل",
+  "Management": "الإدارة",
+  "Customer Service": "خدمة العملاء",
+  "Sales": "المبيعات",
+  "Marketing": "التسويق",
+  "Accounting": "المحاسبة",
+  "Data Entry": "إدخال البيانات",
+  "Design": "التصميم",
+  "Programming": "البرمجة",
+  "whitecollar": "ملف الموظف المكتبي",
+  "bluecollar": "ملف العامل اليدوي"
 
 }

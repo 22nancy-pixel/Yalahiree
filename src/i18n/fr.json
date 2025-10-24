@@ -111,5 +111,18 @@
   "remove_education": "Supprimer la formation",
   "personal_info": "Informations personnelles",
   "enter_other_skill": "Entrez une autre compétence",
-  "role": "Sélectionnez votre rôle"
+  "role": "Sélectionnez votre rôle",
+  "whitecollar_profile_description": "Complétez votre profil professionnel pour que les entreprises puissent vous trouver facilement.",
+  "Communication": "Communication",
+  "Management": "Gestion",
+  "Customer Service": "Service client",
+  "Sales": "Ventes",
+  "Marketing": "Marketing",
+  "Accounting": "Comptabilité",
+  "Data Entry": "Saisie de données",
+  "Design": "Design",
+  "Programming": "Programmation",
+  "whitecollar": "Profil cadre",
+  "bluecollar": "Profil ouvrier"
+
 }

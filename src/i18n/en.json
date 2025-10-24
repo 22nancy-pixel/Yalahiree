@@ -113,5 +113,18 @@
   "remove_education": "Remove Education",
   "personal_info": "Personal Information",
   "enter_other_skill": "Enter other skill",
-  "role": "Select Your Role"
+  "role": "Select Your Role",
+  "whitecollar_profile_description": "Complete your professional profile so companies can find you easily.",
+  "Communication": "Communication",
+  "Management": "Management",
+  "Customer Service": "Customer Service",
+  "Sales": "Sales",
+  "Marketing": "Marketing",
+  "Accounting": "Accounting",
+  "Data Entry": "Data Entry",
+  "Design": "Design",
+  "Programming": "Programming",
+  "whitecollar": "White Collar Profile",
+  "bluecollar": "Blue Collar Profile"
+
 }

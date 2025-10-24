@@ -13,7 +13,8 @@ import LanguageSelector from './components/LanguageSelector'
 import AuthForm from './components/AuthForm'
 import Original from './pages/Original'
 import ResumeBuilderBlueCollar from './pages/BlueCollarProfile'
-
+import ResumeBuilderWhiteCollar from './pages/WhiteCollarProfile';
+import CompanyProfile from './pages/CompanyProfile'
 function App() {
   const { t } = useTranslation()
   const session = useSession()
@@ -27,6 +28,8 @@ function App() {
             <Route path="/" element={<Original />} />
             <Route path="/home" element={<Home />} />
             <Route path="/resume" element={<ResumeBuilderBlueCollar />} />
+            <Route path="/whitecollar" element={<ResumeBuilderWhiteCollar />} />
+            <Route path="/company-profile" element={<CompanyProfile />} />
 
             {/* Protected route */}
             <Route
@@ -82,8 +85,14 @@ function NavBar({ t, session }) {
       <div>
         <Link to="/" style={{ marginRight: '1rem' }}>{t('home')}</Link>
         <Link to="/home" style={{ marginRight: '1rem' }}>{t('role')}</Link>
-        <Link to="/resume" style={{ marginRight: '1rem' }}>{t('profile')}</Link>
+        <Link to="/resume" style={{ marginRight: '1rem' }}>{t('bluecollar')}</Link>
         <Link to="/auth" style={{ marginRight: '1rem' }}>{t('login')}</Link>
+        <Link to="/whitecollar" style={{ marginRight: '1rem' }}>{t('whitecollar')}</Link>
+        <Link to="/company-profile" style={{ marginRight: '1rem' }}>
+        {t('company_profile') || 'Company Profile'}
+         </Link>
+
+
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
