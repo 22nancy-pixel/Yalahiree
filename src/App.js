@@ -1,13 +1,14 @@
+// src/App.js
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from './supabaseClient'
 import { useSession } from './useSession'
 
 import Home from './pages/Home'
-import EmployerDashboard from './pages/EmployerDashboard'
-import AuthForm from './components/AuthForm'
 import Original from './pages/Original'
+import AuthForm from './components/AuthForm'
+import EmployerDashboard from './pages/EmployerDashboard'
 import BlueCollarProfile from './pages/BlueCollarProfile'
 import WhiteCollarProfile from './pages/WhiteCollarProfile'
 import CompanyProfile from './pages/CompanyProfile'
@@ -16,48 +17,50 @@ import LanguageSelector from './components/LanguageSelector'
 function App() {
   const { t } = useTranslation()
   const session = useSession()
-  const userType = session?.user?.user_metadata?.type // 'white', 'blue', or 'company'
+  const userType = session?.user?.user_metadata?.type
 
   return (
     <Router>
       <div>
         <NavBar t={t} session={session} userType={userType} />
+
         <div style={{ padding: '2rem' }}>
           <Routes>
-            {/* Public routes */}
+            {/* Landing */}
             <Route path="/" element={<Original />} />
             <Route path="/home" element={<Home />} />
 
-            {/* Auth route */}
+            {/* Auth */}
+            <Route path="/auth" element={<AuthForm />} />
+
+            {/* Protected routes */}
             <Route
-              path="/auth"
+              path="/whitecollar"
               element={
-                session ? (
-                  <Navigate to={getRedirectPath(userType)} replace />
+                session && userType === 'white' ? (
+                  <WhiteCollarProfile />
                 ) : (
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 50 }}>
-                    <AuthForm />
-                  </div>
+                  <Navigate to="hiteCollarProfile" replace />
                 )
               }
             />
-
-            {/* Protected routes by role */}
-            <Route
-              path="/whitecollar"
-              element={session && userType === 'white' ? <WhiteCollarProfile /> : <Navigate to="/home" replace />}
-            />
             <Route
               path="/bluecollar"
-              element={session && userType === 'blue' ? <BlueCollarProfile /> : <Navigate to="/home" replace />}
+              element={
+                session && userType === 'blue' ? <BlueCollarProfile /> : <Navigate to="BlueCollarProfile" replace />
+              }
             />
             <Route
               path="/dashboard"
-              element={session && userType === 'company' ? <EmployerDashboard /> : <Navigate to="/home" replace />}
+              element={
+                session && userType === 'company' ? <EmployerDashboard /> : <Navigate to="/" replace />
+              }
             />
             <Route
               path="/company-profile"
-              element={session && userType === 'company' ? <CompanyProfile /> : <Navigate to="/home" replace />}
+              element={
+                session && userType === 'company' ? <CompanyProfile /> : <Navigate to="/" replace />
+              }
             />
 
             {/* Fallback */}
@@ -69,14 +72,7 @@ function App() {
   )
 }
 
-// Helper: redirect based on user type
-function getRedirectPath(userType) {
-  if (userType === 'white') return '/whitecollar'
-  if (userType === 'blue') return '/bluecollar'
-  if (userType === 'company') return '/dashboard'
-  return '/home'
-}
-
+// NavBar
 function NavBar({ t, session, userType }) {
   const navigate = useNavigate()
 
@@ -85,7 +81,6 @@ function NavBar({ t, session, userType }) {
     navigate('/', { replace: true })
   }
 
-  // Define role-based links
   const links = [
     { name: t('home'), path: '/home', roles: ['white', 'blue', 'company'] },
     { name: t('whitecollar'), path: '/whitecollar', roles: ['white'] },
@@ -113,7 +108,6 @@ function NavBar({ t, session, userType }) {
               {link.name}
             </Link>
           ))}
-
         {!session && <Link to="/auth">{t('login')}</Link>}
       </div>
 
