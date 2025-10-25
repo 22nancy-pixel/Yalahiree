@@ -14,13 +14,13 @@ export default function AuthForm() {
   const [username, setUsername] = useState('')
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
-  const [userType, setUserType] = useState(null) // 'white' | 'blue'
+  const [userType, setUserType] = useState(null) // 'white' | 'blue' | 'company'
 
   // Get userType from URL query
   useEffect(() => {
     const query = new URLSearchParams(location.search)
-    const type = query.get('type') // white | blue
-    if (['white', 'blue'].includes(type)) setUserType(type)
+    const type = query.get('type') // white | blue | company
+    if (['white', 'blue', 'company'].includes(type)) setUserType(type)
   }, [location.search])
 
   const handleSubmit = async (e) => {
@@ -31,7 +31,8 @@ export default function AuthForm() {
     // Validation
     if (!email) return setErrors({ email: t('Required') })
     if (!password) return setErrors({ password: t('Required') })
-    if (!username && mode === 'signup') return setErrors({ username: t('Required') })
+    if (!username && mode === 'signup' && userType !== 'company')
+      return setErrors({ username: t('Required') })
 
     try {
       let supabaseUser
@@ -52,26 +53,21 @@ export default function AuthForm() {
         supabaseUser = data.user
 
         // Decide table based on userType
-        const tableName = userType === 'blue' ? 'blue_users' : 'white_users'
+        if (userType !== 'company') {
+          const tableName = userType === 'blue' ? 'blue_users' : 'white_users'
 
-        // Insert user into their specific table if not already exists
-        const { data: existing } = await supabase
-          .from(tableName)
-          .select('id')
-          .eq('id', supabaseUser.id)
-
-        if (existing.length === 0) {
-          const { error: dbError } = await supabase
+          // Insert user into their specific table if not exists
+          const { data: existing } = await supabase
             .from(tableName)
-            .insert([
-              {
-                id: supabaseUser.id,
-                email,
-                username,
-                profile_data: {},
-              },
-            ])
-          if (dbError) throw dbError
+            .select('id')
+            .eq('id', supabaseUser.id)
+
+          if (existing.length === 0) {
+            const { error: dbError } = await supabase
+              .from(tableName)
+              .insert([{ id: supabaseUser.id, email, username, profile_data: {} }])
+            if (dbError) throw dbError
+          }
         }
 
         // Automatically log in after signup
@@ -112,7 +108,7 @@ export default function AuthForm() {
           style={{ width: '100%', padding: '8px', marginBottom: '0.5rem' }}
         />
 
-        {mode === 'signup' && (
+        {mode === 'signup' && userType !== 'company' && (
           <input
             type="text"
             placeholder={t('Username')}
@@ -176,4 +172,3 @@ export default function AuthForm() {
     </div>
   )
 }
-
