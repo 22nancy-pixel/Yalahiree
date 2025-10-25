@@ -9,181 +9,171 @@ export default function AuthForm() {
   const location = useLocation()
 
   const [mode, setMode] = useState('login') // 'login' | 'signup'
-  const [contact, setContact] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('')
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
-  const [userType, setUserType] = useState(null) // company | white | blue | null
+  const [userType, setUserType] = useState(null) // 'white' | 'blue'
 
-  // Read userType from query param
+  // Get userType from URL query
   useEffect(() => {
     const query = new URLSearchParams(location.search)
-    const type = query.get('type') // company | white | blue
-    if (type === 'company' || type === 'white' || type === 'blue') {
-      setUserType(type)
-    }
+    const type = query.get('type') // white | blue
+    if (['white', 'blue'].includes(type)) setUserType(type)
   }, [location.search])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrors({})
-
-    if (!contact) return setErrors({ contact: t('Required') })
-    if ((userType === 'white' || userType === 'company' || userType === 'blue') && mode === 'login' && !password)
-      return setErrors({ password: t('Required')})
-
     setLoading(true)
 
+    // Validation
+    if (!email) return setErrors({ email: t('Required') })
+    if (!password) return setErrors({ password: t('Required') })
+    if (!username && mode === 'signup') return setErrors({ username: t('Required') })
+
     try {
-      // Company or White Collar → email/password
-      if (userType === 'white' || userType === 'company') {
-        if (mode === 'signup') {
-          const { error } = await supabase.auth.signUp({
-            email: contact,
-            password,
-            options: { data: { type: userType } },
-          })
-          if (error) throw error
-          alert(t('Sign-up successful! Check your inbox.'))
-        } else {
-          const { error } = await supabase.auth.signInWithPassword({
-            email: contact,
-            password,
-          })
-          if (error) throw error
-          alert(t('Logged in successfully!'))
+      let supabaseUser
+
+      // ------------------------
+      // SIGNUP
+      // ------------------------
+      if (mode === 'signup') {
+        if (!userType) throw new Error('User type not defined')
+
+        // Signup via Supabase Auth
+        const { data, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { type: userType } },
+        })
+        if (authError) throw authError
+        supabaseUser = data.user
+
+        // Decide table based on userType
+        const tableName = userType === 'blue' ? 'blue_users' : 'white_users'
+
+        // Insert user into their specific table if not already exists
+        const { data: existing } = await supabase
+          .from(tableName)
+          .select('id')
+          .eq('id', supabaseUser.id)
+
+        if (existing.length === 0) {
+          const { error: dbError } = await supabase
+            .from(tableName)
+            .insert([
+              {
+                id: supabaseUser.id,
+                email,
+                username,
+                profile_data: {},
+              },
+            ])
+          if (dbError) throw dbError
         }
+
+        // Automatically log in after signup
+        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+        if (loginError) throw loginError
+
+        alert(t('Signed up and logged in successfully!'))
+        navigate('/dashboard')
       }
 
-      // Blue Collar → phone + password login/signup
-      if (userType === 'blue') {
-        if (mode === 'signup') {
-          // Signup: store phone and password (optional) in Supabase
-          const { error } = await supabase.auth.signUp({
-            email: contact + '@bluecollar.local', // dummy email for Supabase
-            password,
-            options: { data: { type: 'blue', phone: contact } },
-          })
-          if (error) throw error
-          alert(t('Sign-up successful! Check your phone for OTP.'))
-        } else {
-          // Login with OTP
-          const { error } = await supabase.auth.signInWithOtp({ phone: contact })
-          if (error) throw error
-          alert(t('OTP sent to your phone!'))
-        }
+      // ------------------------
+      // LOGIN
+      // ------------------------
+      if (mode === 'login') {
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
+        alert(t('Logged in successfully!'))
+        navigate('/dashboard')
       }
-
-      navigate('/dashboard')
     } catch (err) {
       setErrors({ form: err.message })
+      console.error('AUTH/DB ERROR:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const renderForm = () => {
-      if (userType === null) {
-    // Wait until useEffect runs
-    return <p style={{ textAlign: 'center' }}>{t('Loading...')}</p>
-  }
+  if (userType === null) return <p style={{ textAlign: 'center' }}>{t('Loading...')}</p>
 
-    if (!['company', 'white', 'blue'].includes(userType)) {
-      return (
-        <p style={{ textAlign: 'center' }}>
-          {t('Please pick your role (Company, Blue or White Collar) first.')}
-        </p>
-      )
-    }
+  return (
+    <div style={{ maxWidth: '400px', margin: '0 auto' }}>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder={t('Email')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ width: '100%', padding: '8px', marginBottom: '0.5rem' }}
+        />
 
+        {mode === 'signup' && (
+          <input
+            type="text"
+            placeholder={t('Username')}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={{ width: '100%', padding: '8px', marginBottom: '0.5rem' }}
+          />
+        )}
 
-    return (
-      <>
-        <form onSubmit={handleSubmit}>
-          {/* Contact and Password Fields */}
-          {(userType === 'white' || userType === 'company' || userType === 'blue') && (
-            <>
-              <div style={{ marginBottom: '1rem' }}>
-                <input
-                  type={userType === 'blue' ? 'tel' : 'email'}
-                  placeholder={userType === 'blue' ? t('Phone Number') : t('Email')}
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  style={{ width: '100%', padding: '8px' }}
-                />
-                {errors.contact && <div style={{ color: 'red', fontSize: '0.85rem' }}>{errors.contact}</div>}
-              </div>
+        <input
+          type="password"
+          placeholder={t('Password')}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ width: '100%', padding: '8px', marginBottom: '0.5rem' }}
+        />
 
-              <div style={{ marginBottom: '1rem' }}>
-                <input
-                  type="password"
-                  placeholder={t('Password')}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: '100%', padding: '8px' }}
-                />
-                {errors.password && <div style={{ color: 'red', fontSize: '0.85rem' }}>{errors.password}</div>}
-              </div>
-            </>
-          )}
+        {errors.form && <p style={{ color: 'red' }}>{errors.form}</p>}
 
-          {errors.form && <div style={{ color: 'red', marginBottom: '1rem' }}>{errors.form}</div>}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '10px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          {loading ? t('loading') : mode === 'signup' ? t('Sign Up') : t('Login')}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {loading
-              ? t('loading') || 'Loading...'
-              : mode === 'signup'
-              ? t('sign_up') || 'Sign Up'
-              : t('login') || 'Login'}
-          </button>
-        </form>
-
-        {/* Sign Up / Forgot Password */}
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          {mode === 'signup' ? (
-            <p>
-              {t('Already have an account?')}{' '}
-              <button
-                type="button"
-                onClick={() => setMode('login')}
-                style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer' }}
-              >
-                {t('Login')}
-              </button>
-            </p>
-          ) : (
-            <p>
-              {t("Don't have an account?")}{' '}
-              <button
-                type="button"
-                onClick={() => setMode('signup')}
-                style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer' }}
-              >
-                {t('Sign Up')}
-              </button>{' '}
-              <button
-                type="button"
-                style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer' }}
-              >
-                {t('Forgot Password')}
-              </button>
-            </p>
-          )}
-        </div>
-      </>
-    )
-  }
-
-  return <div style={{ maxWidth: '400px', width: '100%', margin: '0 auto' }}>{renderForm()}</div>
+      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+        {mode === 'signup' ? (
+          <p>
+            {t('Already have an account?')}{' '}
+            <button
+              type="button"
+              onClick={() => setMode('login')}
+              style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer' }}
+            >
+              {t('Login')}
+            </button>
+          </p>
+        ) : (
+          <p>
+            {t("Don't have an account?")}{' '}
+            <button
+              type="button"
+              onClick={() => setMode('signup')}
+              style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer' }}
+            >
+              {t('Sign Up')}
+            </button>
+          </p>
+        )}
+      </div>
+    </div>
+  )
 }
+

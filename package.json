@@ -10,7 +10,8 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.58.0",
+    "@supabase/supabase-js": "^2.76.1",
+    "bcryptjs": "^3.0.2",
     "date-fns": "^4.1.0",
     "i18next": "^25.5.2",
     "react": "^18.3.1",
