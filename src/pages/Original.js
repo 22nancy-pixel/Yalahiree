@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { FaBuilding, FaUserTie } from 'react-icons/fa'
@@ -9,18 +9,16 @@ function Original() {
   const navigate = useNavigate()
   const session = useSession()
 
-  // Redirect logged-in users
-  if (session) {
-    navigate('/dashboard')
-    return null
-  }
+  // If already logged in, go directly to the right page
+  useEffect(() => {
+    if (session?.user?.user_metadata?.type === 'company') navigate('/dashboard', { replace: true })
+    if (session?.user?.user_metadata?.type === 'white') navigate('/whitecollar', { replace: true })
+    if (session?.user?.user_metadata?.type === 'blue') navigate('/bluecollar', { replace: true })
+  }, [session, navigate])
 
   const handleSelectType = (type) => {
-    if (type === 'company') {
-      navigate(`/auth?type=company`)
-    } else if (type === 'jobseeker') {
-      navigate(`/home`)
-    }
+    if (type === 'company') navigate('/auth?type=company')
+    else if (type === 'jobseeker') navigate('/home') // go to Home to select Blue or White
   }
 
   return (
@@ -48,7 +46,6 @@ function Original() {
         <h1 style={{ color: '#004080' }}>{t('welcome_yala')}</h1>
         <p style={{ marginBottom: '2rem' }}>{t('original_msg')}</p>
 
-        {/* Boxes */}
         <div
           style={{
             display: 'flex',
@@ -59,7 +56,7 @@ function Original() {
             flexWrap: 'wrap',
           }}
         >
-          {/* Company (Hiring) */}
+          {/* Company */}
           <button
             onClick={() => handleSelectType('company')}
             style={{
