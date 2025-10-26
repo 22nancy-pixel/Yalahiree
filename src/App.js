@@ -65,11 +65,11 @@ function App() {
             {/* Profile builder/edit pages */}
             <Route
               path="/edit-blue-profile"
-              element={session && userType === "blue" ? <BlueProfileBuilder /> : <Navigate to="/home" replace />}
+              element={session && userType === "blue" ? <BlueCollarProfile /> : <Navigate to="/home" replace />}
             />
             <Route
               path="/edit-white-profile"
-              element={session && userType === "white" ? <WhiteProfileBuilder /> : <Navigate to="/home" replace />}
+              element={session && userType === "white" ? <WhiteCollarProfile /> : <Navigate to="/home" replace />}
             />
 
             {/* Existing protected routes */}

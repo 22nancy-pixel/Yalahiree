@@ -1,67 +1,93 @@
-import React, { useState } from "react"
-import { supabase } from "../supabaseClient"
-import { useNavigate } from "react-router-dom"
+// src/components/AuthForm.jsx
+import React, { useState } from "react";
+import { supabase } from "../supabaseClient";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
-export default function AuthForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [isResetting, setIsResetting] = useState(false)
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
-  const navigate = useNavigate()
+export default function AuthForm({ userType = "white" }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const [identifier, setIdentifier] = useState(""); // email or phone
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const isBlue = userType === "blue";
 
   // --- LOGIN ---
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setError("")
-    setMessage("")
+    e.preventDefault();
+    setError("");
+    setMessage("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      let loginEmail = identifier;
 
-    if (error) {
-      setError(error.message)
-    } else {
-      const userType = data.user?.user_metadata?.type
-      if (userType === "white") navigate("/whitecollar")
-      else if (userType === "blue") navigate("/bluecollar")
-      else if (userType === "company") navigate("/dashboard")
-      else navigate("/home")
+      if (isBlue) {
+        // Fetch email by phone
+        const { data, error: fetchError } = await supabase
+          .from("blue_users")
+          .select("email")
+          .eq("phone", identifier)
+          .single();
+        if (fetchError || !data?.email) throw new Error(t("invalid_phone"));
+        loginEmail = data.email;
+      }
+
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password,
+      });
+
+      if (loginError) throw loginError;
+
+      const type = data.user?.user_metadata?.type;
+      if (type === "white") navigate("/whitecollar");
+      else if (type === "blue") navigate("/bluecollar");
+      else if (type === "company") navigate("/dashboard");
+      else navigate("/home");
+    } catch (err) {
+      setError(err.message);
     }
-  }
+  };
 
   // --- SIGN UP ---
   const handleSignUp = async (e) => {
-    e.preventDefault()
-    setError("")
-    setMessage("")
+    e.preventDefault();
+    setError("");
+    setMessage("");
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { type: "white" }, // default type — change after signup if needed
-      },
-    })
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: identifier,
+        password,
+        options: { data: { type: "white" } }, // default, adjust later
+      });
+      if (signUpError) throw signUpError;
 
-    if (error) setError(error.message)
-    else setMessage("Check your email for confirmation link.")
-  }
+      setMessage(t("check_email_confirmation"));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   // --- RESET PASSWORD ---
   const handleResetPassword = async (e) => {
-    e.preventDefault()
-    setError("")
-    setMessage("")
+    e.preventDefault();
+    setError("");
+    setMessage("");
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email)
-
-    if (error) setError(error.message)
-    else setMessage("Password reset email sent. Please check your inbox.")
-  }
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(identifier);
+      if (resetError) throw resetError;
+      setMessage(t("password_reset_sent"));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
     <div
@@ -75,10 +101,10 @@ export default function AuthForm() {
     >
       <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
         {isResetting
-          ? "Reset Password"
+          ? t("reset_password")
           : isSignUp
-          ? "Sign Up"
-          : "Login"}
+          ? t("sign_up")
+          : t("login")}
       </h2>
 
       <form
@@ -91,11 +117,11 @@ export default function AuthForm() {
         }
       >
         <div style={{ marginBottom: "1rem" }}>
-          <label>Email</label>
+          <label>{isBlue && !isSignUp ? t("phone_number") : t("email")}</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type={isBlue && !isSignUp ? "text" : "email"}
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             required
             style={{
               width: "100%",
@@ -109,7 +135,7 @@ export default function AuthForm() {
 
         {!isResetting && (
           <div style={{ marginBottom: "1rem" }}>
-            <label>Password</label>
+            <label>{t("password")}</label>
             <input
               type="password"
               value={password}
@@ -126,12 +152,8 @@ export default function AuthForm() {
           </div>
         )}
 
-        {error && (
-          <p style={{ color: "red", textAlign: "center" }}>{error}</p>
-        )}
-        {message && (
-          <p style={{ color: "green", textAlign: "center" }}>{message}</p>
-        )}
+        {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+        {message && <p style={{ color: "green", textAlign: "center" }}>{message}</p>}
 
         <button
           type="submit"
@@ -147,10 +169,10 @@ export default function AuthForm() {
           }}
         >
           {isResetting
-            ? "Send Reset Link"
+            ? t("send_reset_link")
             : isSignUp
-            ? "Sign Up"
-            : "Login"}
+            ? t("sign_up")
+            : t("login")}
         </button>
       </form>
 
@@ -171,7 +193,7 @@ export default function AuthForm() {
             }}
             onClick={() => setIsResetting(true)}
           >
-            Forgot your password?
+            {t("forgot_password")}
           </p>
         )}
 
@@ -184,16 +206,16 @@ export default function AuthForm() {
             }}
             onClick={() => setIsResetting(false)}
           >
-            Back to login
+            {t("back_to_login")}
           </p>
         ) : (
           <p>
-            {isSignUp ? "Already have an account?" : "Don’t have an account?"}{" "}
+            {isSignUp ? t("already_have_account") : t("dont_have_account")}{" "}
             <span
               onClick={() => {
-                setIsSignUp(!isSignUp)
-                setError("")
-                setMessage("")
+                setIsSignUp(!isSignUp);
+                setError("");
+                setMessage("");
               }}
               style={{
                 cursor: "pointer",
@@ -201,11 +223,11 @@ export default function AuthForm() {
                 textDecoration: "underline",
               }}
             >
-              {isSignUp ? "Login" : "Sign Up"}
+              {isSignUp ? t("login") : t("sign_up")}
             </span>
           </p>
         )}
       </div>
     </div>
-  )
+  );
 }

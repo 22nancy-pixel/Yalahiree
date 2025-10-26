@@ -134,6 +134,12 @@
   "additional_notes": "ملاحظات إضافية",
   "remove_job": "حذف الوظيفة",
   "add_another_job": "أضف وظيفة أخرى",
-  "save_profile": "حفظ الملف الشخصي"
-
+  "save_profile": "حفظ الملف الشخصي",
+  "yalahire_title": "YalaHire",
+  "loading_profile": "جاري تحميل الملف الشخصي...",
+  "no_profile_found": "لم يتم العثور على الملف الشخصي.",
+  "profession": "المهنة",
+  "not_provided": "غير متوفر",
+  "edit_profile": "تعديل الملف الشخصي",
+  "name":"الاسم"
 }

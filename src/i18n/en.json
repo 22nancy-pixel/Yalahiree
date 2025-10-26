@@ -136,6 +136,12 @@
   "additional_notes": "Additional Notes",
   "remove_job": "Remove Job",
   "add_another_job": "Add Another Job",
-  "save_profile": "Save Profile"
-
+  "save_profile": "Save Profile",
+  "yalahire_title": "YalaHire",
+  "loading_profile": "Loading profile...",
+  "no_profile_found": "No profile found.",
+  "profession": "Profession",
+  "not_provided": "Not provided",
+  "edit_profile": "Edit Profile",
+  "name":"Name"
 }

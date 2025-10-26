@@ -1,52 +1,54 @@
 // src/pages/ProfilePage.jsx
-import React, { useEffect, useState } from "react"
-import { supabase } from "../supabaseClient"
-import { useNavigate } from "react-router-dom"
+import React, { useEffect, useState } from "react";
+import { supabase } from "../supabaseClient";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  const navigate = useNavigate()
+  const { t } = useTranslation();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
         const {
           data: { user },
           error: userError,
-        } = await supabase.auth.getUser()
+        } = await supabase.auth.getUser();
 
         if (userError || !user) {
-          navigate("/auth")
-          return
+          navigate("/auth");
+          return;
         }
 
-        const userType = user.user_metadata?.type
-        const tableName = userType === "blue" ? "blue_users" : "white_users"
+        const userType = user.user_metadata?.type;
+        const tableName = userType === "blue" ? "blue_users" : "white_users";
 
         const { data, error: profileError } = await supabase
           .from(tableName)
           .select("*")
           .eq("id", user.id)
-          .single()
+          .single();
 
-        if (profileError) throw profileError
-        setProfile({ ...data, type: userType })
+        if (profileError) throw profileError;
+        setProfile({ ...data, type: userType });
       } catch (err) {
-        setError(err.message)
+        setError(err.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchProfile()
-  }, [navigate])
+    fetchProfile();
+  }, [navigate]);
 
-  if (loading) return <p>Loading profile...</p>
-  if (error) return <p style={{ color: "red" }}>{error}</p>
-  if (!profile) return <p>No profile found.</p>
+  if (loading) return <p>{t("loading_profile")}</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (!profile) return <p>{t("no_profile_found")}</p>;
 
   return (
     <div
@@ -60,30 +62,34 @@ export default function ProfilePage() {
       }}
     >
       <h2 style={{ textAlign: "center", color: "#004080" }}>
-        {profile.type === "blue" ? "Blue Collar Profile" : "White Collar Profile"}
+        {t("yalahire_title")}
       </h2>
 
       <div style={{ marginTop: "1rem" }}>
-        <p><strong>Name:</strong> {profile.username || "Not provided"}</p>
-        <p><strong>Email:</strong> {profile.email}</p>
         <p>
-          <strong>Phone:</strong>{" "}
-          {profile.profile_data?.phone || "Not provided"}
+          <strong>{t("name")}:</strong> {profile.username || t("not_provided")}
         </p>
         <p>
-          <strong>Location:</strong>{" "}
-          {profile.profile_data?.location || "Not provided"}
+          <strong>{t("email")}:</strong> {profile.email}
+        </p>
+        <p>
+          <strong>{t("phone")}:</strong>{" "}
+          {profile.profile_data?.phone || t("not_provided")}
+        </p>
+        <p>
+          <strong>{t("location")}:</strong>{" "}
+          {profile.profile_data?.location || t("not_provided")}
         </p>
         {profile.type === "white" && (
           <p>
-            <strong>Profession:</strong>{" "}
-            {profile.profile_data?.profession || "Not provided"}
+            <strong>{t("profession")}:</strong>{" "}
+            {profile.profile_data?.profession || t("not_provided")}
           </p>
         )}
         {profile.type === "blue" && (
           <p>
-            <strong>Skills:</strong>{" "}
-            {profile.profile_data?.skills?.join(", ") || "Not provided"}
+            <strong>{t("skills")}:</strong>{" "}
+            {profile.profile_data?.skills?.join(", ") || t("not_provided")}
           </p>
         )}
       </div>
@@ -107,8 +113,8 @@ export default function ProfilePage() {
           cursor: "pointer",
         }}
       >
-        Edit Profile
+        {t("edit_profile")}
       </button>
     </div>
-  )
+  );
 }

@@ -134,6 +134,12 @@
   "additional_notes": "Notes supplémentaires",
   "remove_job": "Supprimer le poste",
   "add_another_job": "Ajouter un autre poste",
-  "save_profile": "Enregistrer le profil"
-
+  "save_profile": "Enregistrer le profil",
+  "yalahire_title": "YalaHire",
+  "loading_profile": "Chargement du profil...",
+  "no_profile_found": "Aucun profil trouvé.",
+  "profession": "Profession",
+  "not_provided": "Non renseigné",
+  "edit_profile": "Modifier le profil",
+  "name":"Nom"
 }
