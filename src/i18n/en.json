@@ -125,6 +125,17 @@
   "Design": "Design",
   "Programming": "Programming",
   "whitecollar": "White Collar Profile",
-  "bluecollar": "Blue Collar Profile"
+  "bluecollar": "Blue Collar Profile",
+    "company_profile_title": "Company Profile",
+  "company_name": "Company Name",
+  "valid_email": "Email (Valid)",
+  "company_description": "Company Description",
+  "open_positions": "Open Job Positions",
+  "job_type": "Job Type",
+  "required_skills": "Required Skills",
+  "additional_notes": "Additional Notes",
+  "remove_job": "Remove Job",
+  "add_another_job": "Add Another Job",
+  "save_profile": "Save Profile"
 
 }

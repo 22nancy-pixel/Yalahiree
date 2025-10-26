@@ -123,6 +123,17 @@
   "Design": "Design",
   "Programming": "Programmation",
   "whitecollar": "Profil cadre",
-  "bluecollar": "Profil ouvrier"
+  "bluecollar": "Profil ouvrier",
+  "company_profile_title": "Profil de l’entreprise",
+  "company_name": "Nom de l’entreprise",
+  "valid_email": "E-mail (valide)",
+  "company_description": "Description de l’entreprise",
+  "open_positions": "Postes ouverts",
+  "job_type": "Type de poste",
+  "required_skills": "Compétences requises",
+  "additional_notes": "Notes supplémentaires",
+  "remove_job": "Supprimer le poste",
+  "add_another_job": "Ajouter un autre poste",
+  "save_profile": "Enregistrer le profil"
 
 }

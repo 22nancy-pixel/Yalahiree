@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react'
+// src/pages/Original.jsx
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { FaBuilding, FaUserTie } from 'react-icons/fa'
@@ -9,16 +10,15 @@ function Original() {
   const navigate = useNavigate()
   const session = useSession()
 
-  // If already logged in, go directly to the right page
-  useEffect(() => {
-    if (session?.user?.user_metadata?.type === 'company') navigate('/dashboard', { replace: true })
-    if (session?.user?.user_metadata?.type === 'white') navigate('/whitecollar', { replace: true })
-    if (session?.user?.user_metadata?.type === 'blue') navigate('/bluecollar', { replace: true })
-  }, [session, navigate])
+  // Redirect logged-in users
+  if (session) {
+    navigate('/dashboard')
+    return null
+  }
 
   const handleSelectType = (type) => {
-    if (type === 'company') navigate('/auth?type=company')
-    else if (type === 'jobseeker') navigate('/home') // go to Home to select Blue or White
+    if (type === 'company') navigate(`/auth?type=white`)
+    else if (type === 'jobseeker') navigate(`/home`)
   }
 
   return (
@@ -46,6 +46,7 @@ function Original() {
         <h1 style={{ color: '#004080' }}>{t('welcome_yala')}</h1>
         <p style={{ marginBottom: '2rem' }}>{t('original_msg')}</p>
 
+        {/* Boxes */}
         <div
           style={{
             display: 'flex',
@@ -56,7 +57,7 @@ function Original() {
             flexWrap: 'wrap',
           }}
         >
-          {/* Company */}
+          {/* Company (Hiring) */}
           <button
             onClick={() => handleSelectType('company')}
             style={{
@@ -74,8 +75,6 @@ function Original() {
               boxShadow: '0 6px 15px rgba(0,0,0,0.15)',
               transition: 'transform 0.2s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
             <FaBuilding size={60} color="white" />
             <p style={{ marginTop: '1rem', fontWeight: 'bold', fontSize: '1.1rem' }}>
@@ -102,8 +101,6 @@ function Original() {
               boxShadow: '0 6px 15px rgba(0,0,0,0.15)',
               transition: 'transform 0.2s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
             <FaUserTie size={60} color="white" />
             <p style={{ marginTop: '1rem', fontWeight: 'bold', fontSize: '1.1rem' }}>

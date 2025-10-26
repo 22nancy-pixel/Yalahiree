@@ -123,6 +123,17 @@
   "Design": "التصميم",
   "Programming": "البرمجة",
   "whitecollar": "ملف الموظف المكتبي",
-  "bluecollar": "ملف العامل اليدوي"
+  "bluecollar": "ملف العامل اليدوي",
+  "company_profile_title": "ملف الشركة",
+  "company_name": "اسم الشركة",
+  "valid_email": "البريد الإلكتروني (صالح)",
+  "company_description": "وصف الشركة",
+  "open_positions": "الوظائف المتاحة",
+  "job_type": "نوع الوظيفة",
+  "required_skills": "المهارات المطلوبة",
+  "additional_notes": "ملاحظات إضافية",
+  "remove_job": "حذف الوظيفة",
+  "add_another_job": "أضف وظيفة أخرى",
+  "save_profile": "حفظ الملف الشخصي"
 
 }

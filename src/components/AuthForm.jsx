@@ -1,171 +1,208 @@
-import React, { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { supabase } from '../supabaseClient'
-import { useNavigate, useLocation } from 'react-router-dom'
+import React, { useState } from "react"
+import { supabase } from "../supabaseClient"
+import { useNavigate } from "react-router-dom"
 
 export default function AuthForm() {
-  const { t } = useTranslation()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
   const navigate = useNavigate()
-  const location = useLocation()
 
-  const [mode, setMode] = useState('login') // 'login' | 'signup'
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [username, setUsername] = useState('')
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [userType, setUserType] = useState(null) // 'white' | 'blue' | 'company'
-
-  // Get userType from URL query
-  useEffect(() => {
-    const query = new URLSearchParams(location.search)
-    const type = query.get('type') // white | blue | company
-    if (['white', 'blue', 'company'].includes(type)) setUserType(type)
-  }, [location.search])
-
-  const handleSubmit = async (e) => {
+  // --- LOGIN ---
+  const handleLogin = async (e) => {
     e.preventDefault()
-    setErrors({})
-    setLoading(true)
+    setError("")
+    setMessage("")
 
-    // Validation
-    if (!email) return setErrors({ email: t('Required') })
-    if (!password) return setErrors({ password: t('Required') })
-    if (!username && mode === 'signup' && userType !== 'company')
-      return setErrors({ username: t('Required') })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-    try {
-      let supabaseUser
-
-      // ------------------------
-      // SIGNUP
-      // ------------------------
-      if (mode === 'signup') {
-        if (!userType) throw new Error('User type not defined')
-
-        // Signup via Supabase Auth
-        const { data, error: authError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { type: userType } },
-        })
-        if (authError) throw authError
-        supabaseUser = data.user
-
-        // Decide table based on userType
-        if (userType !== 'company') {
-          const tableName = userType === 'blue' ? 'blue_users' : 'white_users'
-
-          // Insert user into their specific table if not exists
-          const { data: existing } = await supabase
-            .from(tableName)
-            .select('id')
-            .eq('id', supabaseUser.id)
-
-          if (existing.length === 0) {
-            const { error: dbError } = await supabase
-              .from(tableName)
-              .insert([{ id: supabaseUser.id, email, username, profile_data: {} }])
-            if (dbError) throw dbError
-          }
-        }
-
-        // Automatically log in after signup
-        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
-        if (loginError) throw loginError
-
-        alert(t('Signed up and logged in successfully!'))
-        navigate('/dashboard')
-      }
-
-      // ------------------------
-      // LOGIN
-      // ------------------------
-      if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
-        alert(t('Logged in successfully!'))
-        navigate('/dashboard')
-      }
-    } catch (err) {
-      setErrors({ form: err.message })
-      console.error('AUTH/DB ERROR:', err)
-    } finally {
-      setLoading(false)
+    if (error) {
+      setError(error.message)
+    } else {
+      const userType = data.user?.user_metadata?.type
+      if (userType === "white") navigate("/whitecollar")
+      else if (userType === "blue") navigate("/bluecollar")
+      else if (userType === "company") navigate("/dashboard")
+      else navigate("/home")
     }
   }
 
-  if (userType === null) return <p style={{ textAlign: 'center' }}>{t('Loading...')}</p>
+  // --- SIGN UP ---
+  const handleSignUp = async (e) => {
+    e.preventDefault()
+    setError("")
+    setMessage("")
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { type: "white" }, // default type — change after signup if needed
+      },
+    })
+
+    if (error) setError(error.message)
+    else setMessage("Check your email for confirmation link.")
+  }
+
+  // --- RESET PASSWORD ---
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    setError("")
+    setMessage("")
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email)
+
+    if (error) setError(error.message)
+    else setMessage("Password reset email sent. Please check your inbox.")
+  }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder={t('Email')}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ width: '100%', padding: '8px', marginBottom: '0.5rem' }}
-        />
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: "10px",
+        padding: "2rem",
+        boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+        width: "350px",
+      }}
+    >
+      <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
+        {isResetting
+          ? "Reset Password"
+          : isSignUp
+          ? "Sign Up"
+          : "Login"}
+      </h2>
 
-        {mode === 'signup' && userType !== 'company' && (
+      <form
+        onSubmit={
+          isResetting
+            ? handleResetPassword
+            : isSignUp
+            ? handleSignUp
+            : handleLogin
+        }
+      >
+        <div style={{ marginBottom: "1rem" }}>
+          <label>Email</label>
           <input
-            type="text"
-            placeholder={t('Username')}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{ width: '100%', padding: '8px', marginBottom: '0.5rem' }}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              width: "100%",
+              padding: "8px",
+              marginTop: "5px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
           />
+        </div>
+
+        {!isResetting && (
+          <div style={{ marginBottom: "1rem" }}>
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginTop: "5px",
+                borderRadius: "5px",
+                border: "1px solid #ccc",
+              }}
+            />
+          </div>
         )}
 
-        <input
-          type="password"
-          placeholder={t('Password')}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ width: '100%', padding: '8px', marginBottom: '0.5rem' }}
-        />
-
-        {errors.form && <p style={{ color: 'red' }}>{errors.form}</p>}
+        {error && (
+          <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+        )}
+        {message && (
+          <p style={{ color: "green", textAlign: "center" }}>{message}</p>
+        )}
 
         <button
           type="submit"
-          disabled={loading}
           style={{
-            width: '100%',
-            padding: '10px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            cursor: 'pointer',
+            width: "100%",
+            background: "#007bff",
+            color: "white",
+            padding: "10px",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            marginBottom: "10px",
           }}
         >
-          {loading ? t('loading') : mode === 'signup' ? t('Sign Up') : t('Login')}
+          {isResetting
+            ? "Send Reset Link"
+            : isSignUp
+            ? "Sign Up"
+            : "Login"}
         </button>
       </form>
 
-      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-        {mode === 'signup' ? (
-          <p>
-            {t('Already have an account?')}{' '}
-            <button
-              type="button"
-              onClick={() => setMode('login')}
-              style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer' }}
-            >
-              {t('Login')}
-            </button>
+      <div
+        style={{
+          textAlign: "center",
+          fontSize: "0.9rem",
+          color: "#555",
+          marginTop: "10px",
+        }}
+      >
+        {!isResetting && (
+          <p
+            style={{
+              cursor: "pointer",
+              color: "#007bff",
+              textDecoration: "underline",
+            }}
+            onClick={() => setIsResetting(true)}
+          >
+            Forgot your password?
+          </p>
+        )}
+
+        {isResetting ? (
+          <p
+            style={{
+              cursor: "pointer",
+              color: "#007bff",
+              textDecoration: "underline",
+            }}
+            onClick={() => setIsResetting(false)}
+          >
+            Back to login
           </p>
         ) : (
           <p>
-            {t("Don't have an account?")}{' '}
-            <button
-              type="button"
-              onClick={() => setMode('signup')}
-              style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer' }}
+            {isSignUp ? "Already have an account?" : "Don’t have an account?"}{" "}
+            <span
+              onClick={() => {
+                setIsSignUp(!isSignUp)
+                setError("")
+                setMessage("")
+              }}
+              style={{
+                cursor: "pointer",
+                color: "#007bff",
+                textDecoration: "underline",
+              }}
             >
-              {t('Sign Up')}
-            </button>
+              {isSignUp ? "Login" : "Sign Up"}
+            </span>
           </p>
         )}
       </div>
