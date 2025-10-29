@@ -1,172 +1,341 @@
 // src/pages/BlueCollarProfile.jsx
-import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { supabase } from '../supabaseClient'
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { supabase } from '../supabaseClient';
+import { useSession } from '../useSession';
 
-import PersonalInfoForm from '../components/bluecollar/PersonalInfo'
-import WorkExperienceForm from '../components/resume/WorkExperienceForm'
-import EducationForm from '../components/bluecollar/EducationForm'
-import SkillsForm from '../components/bluecollar/SkillsStep'
-import UploadResumeStep from '../components/bluecollar/UploadResume'
+function Card({ title, children }) {
+  return (
+    <div style={{
+      border: '1px solid #ddd',
+      borderRadius: '8px',
+      padding: '1rem',
+      marginBottom: '1rem',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      backgroundColor: '#fff'
+    }}>
+      <h3 style={{ marginBottom: '0.5rem' }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
 
 export default function BlueCollarProfile() {
-  const { t } = useTranslation()
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { t } = useTranslation();
+  const session = useSession();
+  const user = session?.user;
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
     location: '',
-    experience: [
-      { jobTitle: '', company: '', startDate: '', endDate: '', description: '' },
-    ],
-    education: [
-      { degree: '', institution: '', year: '' },
-    ],
+    experience: [],
+    education: [],
     skills: [],
     otherSkill: '',
-    resume_url: '',
-  })
+    resumeUrl: null
+  });
 
-  const [step, setStep] = useState(1)
-
-  // Fetch logged-in user and profile
+  // Fetch all data
   useEffect(() => {
-    const fetchUserAndProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    const fetchProfile = async () => {
+      if (!user) return;
 
-      setUser(user)
+      try {
+        // Profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('blue_collar_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        if (profileError && profileError.code !== 'PGRST116') console.error(profileError);
 
-      // Fetch profile data
-      const { data: profile } = await supabase
-        .from('blue_collar_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+        // Experience
+        const { data: expData, error: expError } = await supabase
+          .from('blue_experience')
+          .select('*')
+          .eq('user_id', user.id);
+        if (expError) console.error(expError);
 
-      if (profile) {
+        // Education
+        const { data: eduData, error: eduError } = await supabase
+          .from('blue_education')
+          .select('*')
+          .eq('user_id', user.id);
+        if (eduError) console.error(eduError);
+
         setFormData({
-          fullName: profile.full_name || '',
-          phone: profile.phone || '',
-          location: profile.location || '',
-          experience: profile.experience || [{ jobTitle: '', company: '', startDate: '', endDate: '', description: '' }],
-          education: profile.education || [{ degree: '', institution: '', year: '' }],
-          skills: profile.skills || [],
-          otherSkill: profile.other_skill || '',
-          resume_url: profile.resume_url || '',
-        })
+          fullName: profileData?.full_name || '',
+          phone: profileData?.phone || '',
+          location: profileData?.location || '',
+          skills: profileData?.skills || [],
+          otherSkill: profileData?.other_skill || '',
+          resumeUrl: profileData?.resume_url || null,
+          experience: expData || [],
+          education: eduData || []
+        });
+      } catch (err) {
+        console.error('Fetch error:', err);
       }
 
-      setLoading(false)
+      setLoading(false);
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  // Save main profile
+  const saveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('blue_collar_profiles')
+        .upsert([{
+          id: user.id,
+          full_name: formData.fullName,
+          phone: formData.phone,
+          location: formData.location,
+          skills: formData.skills,
+          other_skill: formData.otherSkill,
+          resume_url: formData.resumeUrl
+        }]);
+      if (error) console.error(error);
+    } finally {
+      setSaving(false);
     }
+  };
 
-    fetchUserAndProfile()
-  }, [])
+  // Save experience
+  const saveExperience = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await supabase.from('blue_experience').delete().eq('user_id', user.id);
+      const formatted = formData.experience.map(job => ({
+        user_id: user.id,
+        job_title: job.jobTitle,
+        company: job.company,
+        start_date: job.startDate || null,
+        end_date: job.endDate || null,
+        description: job.description
+      }));
+      const { error } = await supabase.from('blue_experience').insert(formatted);
+      if (error) console.error(error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  const saveSection = async (sectionData) => {
-    if (!user) return
+  // Save education
+  const saveEducation = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await supabase.from('blue_education').delete().eq('user_id', user.id);
+      const formatted = formData.education.map(edu => ({
+        user_id: user.id,
+        degree: edu.degree,
+        institution: edu.institution,
+        year: edu.year
+      }));
+      const { error } = await supabase.from('blue_education').insert(formatted);
+      if (error) console.error(error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    const updatedData = { ...formData, ...sectionData }
-    setFormData(updatedData)
+  // Resume upload
+  const handleFileUpload = async (file) => {
+    if (!file || !user) return;
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage
+      .from('resumes')
+      .upload(fileName, file, { upsert: true });
+    if (uploadError) return console.error(uploadError);
 
-    // Upsert: create row if not exists
-    const { error } = await supabase
-      .from('blue_collar_profiles')
-      .upsert([{
-        id: user.id,
-        full_name: updatedData.fullName,
-        phone: updatedData.phone,
-        location: updatedData.location,
-        experience: updatedData.experience,
-        education: updatedData.education,
-        skills: updatedData.skills,
-        other_skill: updatedData.otherSkill,
-        resume_url: updatedData.resume_url,
-      }])
-    if (error) console.error('Failed to save:', error)
-  }
+    const { data: urlData } = supabase.storage
+      .from('resumes')
+      .getPublicUrl(fileName);
 
-  if (loading) return <p>{t('Loading...')}</p>
+    setFormData({ ...formData, resumeUrl: urlData.publicUrl });
+    saveProfile();
+  };
+
+  if (loading) return <p>{t('loading_profile')}</p>;
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '1rem' }}>
-      <h2>👷 {t('build_profile')}</h2>
-      <p>{t('bluecollar_profile_description')}</p>
+    <div style={{ padding: '1rem', maxWidth: '900px', margin: '0 auto' }}>
+      <h2 style={{ marginBottom: '1rem' }}>👷 {t('bluecollar_profile')}</h2>
 
-      {/* Step 1: Personal Info */}
-      <PersonalInfoForm
-        formData={formData}
-        setFormData={(data) => { setFormData(data); saveSection(data) }}
-        onNext={() => setStep(2)}
-        fields={['fullName', 'phone', 'location']}
-        labels={{
-          fullName: t('full_name'),
-          phone: t('phone_number'),
-          location: t('location'),
-        }}
-      />
+      {/* PERSONAL INFO */}
+      <Card title={t('personal_info')}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          {['fullName', 'phone', 'location'].map(field => (
+            <div key={field}>
+              <label>{t(field)}</label>
+              <input
+                type="text"
+                value={formData[field]}
+                onChange={(e) =>
+                  setFormData({ ...formData, [field]: e.target.value })
+                }
+                style={{ width: '100%', padding: '6px', marginTop: '4px' }}
+              />
+            </div>
+          ))}
+        </div>
+        <button onClick={saveProfile} style={{ marginTop: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}>
+          {t('save_personal_info')}
+        </button>
+      </Card>
 
-      {/* Step 2: Work Experience */}
-      <WorkExperienceForm
-        formData={formData}
-        setFormData={(data) => { setFormData(data); saveSection(data) }}
-        onNext={() => setStep(3)}
-        onBack={() => setStep(1)}
-        required
-        labels={{
-          jobTitle: t('job_title'),
-          company: t('company'),
-          startDate: t('start_date'),
-          endDate: t('end_date'),
-          description: t('description'),
-        }}
-      />
+      {/* EXPERIENCE */}
+      <Card title={t('experience')}>
+        {formData.experience.map((job, idx) => (
+          <div key={idx} style={{ marginBottom: '0.5rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
+            {['jobTitle', 'company', 'startDate', 'endDate', 'description'].map(field => (
+              <div key={field} style={{ marginBottom: '0.25rem' }}>
+                <label>{t(field)}</label>
+                <input
+                  type="text"
+                  value={job[field]}
+                  onChange={(e) => {
+                    const exp = [...formData.experience];
+                    exp[idx][field] = e.target.value;
+                    setFormData({ ...formData, experience: exp });
+                  }}
+                  style={{ width: '100%', padding: '4px' }}
+                />
+              </div>
+            ))}
+            {idx !== 0 && (
+              <button
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    experience: formData.experience.filter((_, i) => i !== idx)
+                  })
+                }
+                style={{ marginTop: '4px', backgroundColor: '#f44336', color: '#fff', padding: '4px 8px', borderRadius: '4px' }}
+              >
+                {t('remove')}
+              </button>
+            )}
+          </div>
+        ))}
 
-      {/* Step 3: Education */}
-      <EducationForm
-        formData={formData}
-        setFormData={(data) => { setFormData(data); saveSection(data) }}
-        onNext={() => setStep(4)}
-        onBack={() => setStep(2)}
-        optional
-        labels={{
-          degree: t('degree'),
-          institution: t('institution'),
-          year: t('year'),
-        }}
-      />
+        <button
+          onClick={() =>
+            setFormData({
+              ...formData,
+              experience: [...formData.experience, { jobTitle: '', company: '', startDate: '', endDate: '', description: '' }]
+            })
+          }
+          style={{ marginTop: '8px', backgroundColor: '#4CAF50', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}
+        >
+          {t('add_experience')}
+        </button>
 
-      {/* Step 4: Skills */}
-      <SkillsForm
-        formData={formData}
-        setFormData={(data) => { setFormData(data); saveSection(data) }}
-        onNext={() => setStep(5)}
-        onBack={() => setStep(3)}
-        skillOptions={[
-          t('Plumbing'),
-          t('Electrician'),
-          t('Carpentry'),
-          t('Construction'),
-          t('Mechanic'),
-          t('Painting'),
-          t('Cleaning'),
-          t('other'),
-        ]}
-        labels={{ skills: t('skills'), other: t('other') }}
-      />
+        <button
+          onClick={saveExperience}
+          style={{ marginTop: '8px', marginLeft: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}
+        >
+          {t('save_experience')}
+        </button>
+      </Card>
 
-      {/* Step 5: Upload Resume */}
-      <UploadResumeStep
-        formData={formData}
-        setFormData={(data) => { setFormData(data); saveSection(data) }}
-        onNext={() => alert(t('Resume saved!'))}
-        onBack={() => setStep(4)}
-        optional
-        labels={{ uploadResume: t('upload_resume') }}
-      />
+      {/* EDUCATION */}
+      <Card title={t('education')}>
+        {formData.education.map((edu, idx) => (
+          <div key={idx} style={{ marginBottom: '0.5rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
+            {['degree', 'institution', 'year'].map(field => (
+              <div key={field} style={{ marginBottom: '0.25rem' }}>
+                <label>{t(field)}</label>
+                <input
+                  type="text"
+                  value={edu[field]}
+                  onChange={(e) => {
+                    const ed = [...formData.education];
+                    ed[idx][field] = e.target.value;
+                    setFormData({ ...formData, education: ed });
+                  }}
+                  style={{ width: '100%', padding: '4px' }}
+                />
+              </div>
+            ))}
+            {formData.education.length > 1 && (
+              <button
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    education: formData.education.filter((_, i) => i !== idx)
+                  })
+                }
+                style={{ marginTop: '4px', backgroundColor: '#f44336', color: '#fff', padding: '4px 8px', borderRadius: '4px' }}
+              >
+                {t('remove')}
+              </button>
+            )}
+          </div>
+        ))}
+
+        <button
+          onClick={() =>
+            setFormData({
+              ...formData,
+              education: [...formData.education, { degree: '', institution: '', year: '' }]
+            })
+          }
+          style={{ marginTop: '8px', backgroundColor: '#4CAF50', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}
+        >
+          {t('add_education')}
+        </button>
+
+        <button
+          onClick={saveEducation}
+          style={{ marginTop: '8px', marginLeft: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}
+        >
+          {t('save_education')}
+        </button>
+      </Card>
+
+      {/* SKILLS */}
+      <Card title={t('skills')}>
+        <input
+          type="text"
+          placeholder={t('skills')}
+          value={formData.skills.join(', ')}
+          onChange={(e) =>
+            setFormData({ ...formData, skills: e.target.value.split(',').map(s => s.trim()) })
+          }
+          style={{ width: '100%', padding: '6px', marginBottom: '0.5rem' }}
+        />
+        <input
+          type="text"
+          placeholder={t('other')}
+          value={formData.otherSkill}
+          onChange={(e) => setFormData({ ...formData, otherSkill: e.target.value })}
+          style={{ width: '100%', padding: '6px' }}
+        />
+        <button onClick={saveProfile} style={{ marginTop: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}>
+          {t('save_skills')}
+        </button>
+      </Card>
+
+      {/* RESUME */}
+      <Card title={t('upload_resume')}>
+        <input type="file" accept=".pdf" onChange={(e) => handleFileUpload(e.target.files[0])} />
+        {formData.resumeUrl && (
+          <div style={{ marginTop: '0.5rem' }}>
+            <a href={formData.resumeUrl} target="_blank" rel="noopener noreferrer">{t('view_uploaded_resume')}</a>
+          </div>
+        )}
+      </Card>
     </div>
-  )
+  );
 }
-
-
