@@ -27,6 +27,8 @@ export default function BlueCollarProfile() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [matching, setMatching] = useState(false);
+  const [matchedJobs, setMatchedJobs] = useState([]);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -38,13 +40,11 @@ export default function BlueCollarProfile() {
     resumeUrl: null
   });
 
-  // Fetch all data
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
 
       try {
-        // Profile
         const { data: profileData, error: profileError } = await supabase
           .from('blue_collar_profiles')
           .select('*')
@@ -52,14 +52,12 @@ export default function BlueCollarProfile() {
           .single();
         if (profileError && profileError.code !== 'PGRST116') console.error(profileError);
 
-        // Experience
         const { data: expData, error: expError } = await supabase
           .from('blue_experience')
           .select('*')
           .eq('user_id', user.id);
         if (expError) console.error(expError);
 
-        // Education
         const { data: eduData, error: eduError } = await supabase
           .from('blue_education')
           .select('*')
@@ -86,7 +84,6 @@ export default function BlueCollarProfile() {
     fetchProfile();
   }, [user]);
 
-  // Save main profile
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
@@ -98,7 +95,7 @@ export default function BlueCollarProfile() {
           full_name: formData.fullName,
           phone: formData.phone,
           location: formData.location,
-          skills: formData.skills,
+          skills: formData.skills.filter(Boolean),
           other_skill: formData.otherSkill,
           resume_url: formData.resumeUrl
         }]);
@@ -108,7 +105,6 @@ export default function BlueCollarProfile() {
     }
   };
 
-  // Save experience
   const saveExperience = async () => {
     if (!user) return;
     setSaving(true);
@@ -129,7 +125,6 @@ export default function BlueCollarProfile() {
     }
   };
 
-  // Save education
   const saveEducation = async () => {
     if (!user) return;
     setSaving(true);
@@ -148,7 +143,6 @@ export default function BlueCollarProfile() {
     }
   };
 
-  // Resume upload
   const handleFileUpload = async (file) => {
     if (!file || !user) return;
     const fileExt = file.name.split('.').pop();
@@ -166,6 +160,24 @@ export default function BlueCollarProfile() {
     saveProfile();
   };
 
+  const findJobs = async () => {
+    if (!user) return;
+    setMatching(true);
+    try {
+      const res = await fetch('/api/matchJobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      setMatchedJobs(data.matchedJobs || []);
+    } catch (err) {
+      console.error('Job matching error:', err);
+    } finally {
+      setMatching(false);
+    }
+  };
+
   if (loading) return <p>{t('loading_profile')}</p>;
 
   return (
@@ -179,7 +191,7 @@ export default function BlueCollarProfile() {
             <div key={field}>
               <label>{t(field)}</label>
               <input
-                type="text"
+                type={field === 'phone' ? 'tel' : 'text'}
                 value={formData[field]}
                 onChange={(e) =>
                   setFormData({ ...formData, [field]: e.target.value })
@@ -189,8 +201,12 @@ export default function BlueCollarProfile() {
             </div>
           ))}
         </div>
-        <button onClick={saveProfile} style={{ marginTop: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}>
-          {t('save_personal_info')}
+        <button
+          onClick={saveProfile}
+          disabled={saving}
+          style={{ marginTop: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}
+        >
+          {saving ? t('saving') : t('save_personal_info')}
         </button>
       </Card>
 
@@ -243,9 +259,10 @@ export default function BlueCollarProfile() {
 
         <button
           onClick={saveExperience}
+          disabled={saving}
           style={{ marginTop: '8px', marginLeft: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}
         >
-          {t('save_experience')}
+          {saving ? t('saving') : t('save_experience')}
         </button>
       </Card>
 
@@ -298,9 +315,10 @@ export default function BlueCollarProfile() {
 
         <button
           onClick={saveEducation}
+          disabled={saving}
           style={{ marginTop: '8px', marginLeft: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}
         >
-          {t('save_education')}
+          {saving ? t('saving') : t('save_education')}
         </button>
       </Card>
 
@@ -311,7 +329,7 @@ export default function BlueCollarProfile() {
           placeholder={t('skills')}
           value={formData.skills.join(', ')}
           onChange={(e) =>
-            setFormData({ ...formData, skills: e.target.value.split(',').map(s => s.trim()) })
+            setFormData({ ...formData, skills: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })
           }
           style={{ width: '100%', padding: '6px', marginBottom: '0.5rem' }}
         />
@@ -322,8 +340,8 @@ export default function BlueCollarProfile() {
           onChange={(e) => setFormData({ ...formData, otherSkill: e.target.value })}
           style={{ width: '100%', padding: '6px' }}
         />
-        <button onClick={saveProfile} style={{ marginTop: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}>
-          {t('save_skills')}
+        <button onClick={saveProfile} disabled={saving} style={{ marginTop: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}>
+          {saving ? t('saving') : t('save_skills')}
         </button>
       </Card>
 
@@ -334,6 +352,32 @@ export default function BlueCollarProfile() {
           <div style={{ marginTop: '0.5rem' }}>
             <a href={formData.resumeUrl} target="_blank" rel="noopener noreferrer">{t('view_uploaded_resume')}</a>
           </div>
+        )}
+      </Card>
+
+      {/* AI JOB MATCHING */}
+      <Card title={t('job_matches')}>
+        <button
+          onClick={findJobs}
+          disabled={matching}
+          style={{ marginBottom: '8px', backgroundColor: '#2196F3', color: '#fff', padding: '6px 12px', borderRadius: '4px' }}
+        >
+          {matching ? t('matching') : t('find_jobs')}
+        </button>
+
+        {matchedJobs.length > 0 ? (
+          matchedJobs.map(job => (
+            <div key={job.id} style={{ padding: '6px', borderBottom: '1px solid #eee' }}>
+              <strong>{job.title}</strong> — {job.company} ({job.location})
+              <button style={{ marginLeft: '8px', backgroundColor: '#4CAF50', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>
+                {t('apply')}
+              </button>
+            </div>
+          ))
+        ) : matching ? (
+          <p>{t('matching')}</p>
+        ) : (
+          <p>{t('no_matches')}</p>
         )}
       </Card>
     </div>
