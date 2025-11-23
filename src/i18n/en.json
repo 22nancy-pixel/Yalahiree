@@ -143,5 +143,7 @@
   "profession": "Profession",
   "not_provided": "Not provided",
   "edit_profile": "Edit Profile",
-  "name":"Name"
+  "name":"Name",
+  "blue_collar_description": "Jobs involving manual labor or skilled trades (e.g., construction, manufacturing, maintenance).",
+  "white_collar_description": "Professional jobs, usually involving office work, administration, or management (e.g., finance, marketing, engineering)."
 }

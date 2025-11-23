@@ -141,5 +141,7 @@
   "profession": "Profession",
   "not_provided": "Non renseigné",
   "edit_profile": "Modifier le profil",
-  "name":"Nom"
+  "name":"Nom",
+  "blue_collar_description": "Emplois impliquant un travail manuel ou des métiers spécialisés (ex: construction, fabrication, maintenance).",
+  "white_collar_description": "Emplois professionnels, impliquant généralement du travail de bureau, de l'administration ou de la gestion (ex: finance, marketing, ingénierie)."
 }

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -12,24 +12,19 @@ import { supabase } from "./supabaseClient";
 import { useSession } from "./useSession";
 
 import Home from "./pages/Home";
-import EmployerDashboard from "./pages/EmployerDashboard";
+import CompanyDashboard from "./pages/CompanyDashboard";
 import AuthForm from "./components/AuthForm";
-import Original from "./pages/Original";
+import LandingPage from "./pages/LandingPage";
 import BlueCollarProfile from "./pages/BlueCollarProfile";
 import WhiteCollarProfile from "./pages/WhiteCollarProfile";
 import CompanyProfile from "./pages/CompanyProfile";
 import LanguageSelector from "./components/LanguageSelector";
 import ProfilePage from "./pages/ProfilePage";
 
-function App() {
+function App() {s
   const { t } = useTranslation();
   const session = useSession();
   const userType = session?.user?.user_metadata?.type; // 'white', 'blue', 'company'
-
-  // Always sign out on first load
-  useEffect(() => {
-    supabase.auth.signOut();
-  }, []);
 
   return (
     <Router>
@@ -38,7 +33,7 @@ function App() {
         <div style={{ padding: "2rem" }}>
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Original />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/home" element={<Home />} />
 
             {/* Auth route */}
@@ -57,7 +52,7 @@ function App() {
               }
             />
 
-            {/* Profile page (after login) */}
+            {/* Profile page */}
             <Route
               path="/profile"
               element={
@@ -65,7 +60,7 @@ function App() {
               }
             />
 
-            {/* Profile editing pages (accessed via edit button) */}
+            {/* Profile editing */}
             <Route
               path="/edit-blue-profile"
               element={
@@ -76,6 +71,7 @@ function App() {
                 )
               }
             />
+
             <Route
               path="/edit-white-profile"
               element={
@@ -92,12 +88,13 @@ function App() {
               path="/dashboard"
               element={
                 session && userType === "company" ? (
-                  <EmployerDashboard />
+                  <CompanyDashboard />
                 ) : (
                   <Navigate to="/" replace />
                 )
               }
             />
+
             <Route
               path="/company-profile"
               element={
@@ -145,24 +142,30 @@ function NavBar({ t, session, userType }) {
       }}
     >
       <div>
-        {links
-          .filter((link) => session && link.roles.includes(userType))
-          .map((link) => (
-            <Link key={link.path} to={link.path} style={{ marginRight: "1rem" }}>
-              {link.name}
-            </Link>
-          ))}
+        {session &&
+          links
+            .filter((link) => link.roles.includes(userType))
+            .map((link) => (
+              <Link key={link.path} to={link.path} style={{ marginRight: "1rem" }}>
+                {link.name}
+              </Link>
+            ))}
+
         {!session && <Link to="/auth">{t("login")}</Link>}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <LanguageSelector />
+
         {session && (
           <>
             <span style={{ fontSize: 12, color: "#555" }}>
               {session.user?.email}
             </span>
-            <button onClick={onLogout} style={{ padding: "6px 10px", cursor: "pointer" }}>
+            <button
+              onClick={onLogout}
+              style={{ padding: "6px 10px", cursor: "pointer" }}
+            >
               {t("logout")}
             </button>
           </>

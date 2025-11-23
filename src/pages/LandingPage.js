@@ -4,19 +4,27 @@ import { useNavigate } from "react-router-dom";
 import { FaBuilding, FaUserTie } from "react-icons/fa";
 import { useSession } from "../useSession";
 
-function Original() {
+function LandingPage() { // Renamed from Original to LandingPage
   const { t } = useTranslation();
   const navigate = useNavigate();
   const session = useSession();
 
+  // If a session exists, redirect them to a generic dashboard. 
+  // NOTE: A robust router would check the user's role here (company, white, blue) 
+  // and redirect to the correct dashboard path (e.g., /company-dashboard).
   if (session) {
-    navigate("/dashboard");
+    navigate("/dashboard"); 
     return null;
   }
 
   const handleSelectType = (type) => {
-    if (type === "company") navigate(`/auth?type=company`);
-    else if (type === "jobseeker") navigate(`/home`);
+    if (type === "company") {
+        // Company goes directly to auth page with type pre-selected
+        navigate(`/auth?type=company`);
+    } else if (type === "jobseeker") {
+        // Job seeker goes to the next selection page (Home.jsx) to choose collar type
+        navigate(`/home`); 
+    }
   };
 
   return (
@@ -107,4 +115,4 @@ function Original() {
   );
 }
 
-export default Original;
+export default LandingPage;
