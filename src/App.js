@@ -21,7 +21,7 @@ import CompanyProfile from "./pages/CompanyProfile";
 import LanguageSelector from "./components/LanguageSelector";
 import ProfilePage from "./pages/ProfilePage";
 
-function App() {s
+function App() {
   const { t } = useTranslation();
   const session = useSession();
   const userType = session?.user?.user_metadata?.type; // 'white', 'blue', 'company'

@@ -147,7 +147,7 @@ function CompanyProfile() {
               id: job.id, 
               company_id: user.id,
               title: job.title,
-              type: job.type,
+              job_type: job.type,
               // Skills are stored as an array in the DB (PostgreSQL text array)
               skills: Array.isArray(job.skills) ? job.skills : job.skills.split(',').map(s => s.trim()).filter(s => s !== ''), 
               experience: job.experience,
